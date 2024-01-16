@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.model_selection import train_test_split
-
+from sklearn.metrics import accuracy_score
 
 
 df=pd.read_table("SMSSpamCollection")
@@ -45,6 +45,5 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 pl.fit(X_train, y_train)
 y_pred = pl.predict(X_test)
 
-from sklearn.metrics import accuracy_score
 score = accuracy_score(y_test, y_pred)
 print("score :", round(score, 5))
