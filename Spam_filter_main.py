@@ -35,10 +35,10 @@ model = Pipeline(steps=[
                         ('model',KNeighborsClassifier(3,p=1))])
 """
 #model = GaussianNB()
-model = MLPClassifier(random_state=1, max_iter=300)
+model = MLPClassifier(random_state=1, max_iter=200)
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
 from sklearn.metrics import accuracy_score
 knn_score = accuracy_score(y_test, y_pred)
-print("KNN :", round(knn_score, 5))
+print("score :", round(knn_score, 5))
