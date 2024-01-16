@@ -46,8 +46,9 @@ if opti: #hyperparameters optimsation
     search=GridSearchCV(pl,param_grid,verbose=10,cv=shuffle_split).fit(X_part,y[X_part.index])
     print(search.best_params_)
 else:
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=5)
     pl.fit(X_train, y_train)
     y_pred = pl.predict(X_test)
     score = accuracy_score(y_test, y_pred)
     print("score :", round(score, 5))
+    print(pd.concat([pd.Series(y_pred,index=X_test.index),X_test],axis=1).head(20))
