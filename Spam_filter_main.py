@@ -33,7 +33,7 @@ model.fit(X_train, y_train)
 
 vectorize_pl = make_pipeline(CountVectorizer(),FunctionTransformer(lambda x: x.toarray(), accept_sparse=True))
 
-pl=make_pipeline(vectorize_pl,PCA(n_components=200),MLPClassifier(random_state=1,max_iter=600,early_stopping=False,learning_rate='adaptive',solver='adam',warm_start=False))
+pl=make_pipeline(vectorize_pl,PCA(n_components=200),MLPClassifier(random_state=1,max_iter=600,early_stopping=False,learning_rate='constant',solver='adam',warm_start=False))
 
 X = df['msg']
 y = df['cat']
