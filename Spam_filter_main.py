@@ -33,8 +33,6 @@ model.fit(X_train, y_train)
 
 
 def train_model(opti,df):
-    global vectorize_pl
-    global pl
 
     X = df['msg']
     y = df['cat']
