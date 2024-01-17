@@ -43,6 +43,7 @@ if opti: #hyperparameters optimsation
     shuffle_split = ShuffleSplit(n_splits=5,test_size=0.3)
     X_part=X.sample(frac=0.5)
     param_grid = {
+    'pca__n_components': [100,150,200,300],
     'mlpclassifier__hidden_layer_sizes': [(150,100,50), (120,80,40), (100,50,30), (100,)],
     'mlpclassifier__max_iter': [50, 100, 150, 200, 300, 400],
     'mlpclassifier__activation': ['tanh', 'relu'],
