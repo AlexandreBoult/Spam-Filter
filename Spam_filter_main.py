@@ -51,4 +51,4 @@ else:
     y_pred = pl.predict(X_test)
     score = accuracy_score(y_test, y_pred)
     print("score :", round(score, 5))
-    print(pd.concat([pd.Series(y_pred,index=X_test.index),X_test],axis=1).head(20))
+    print(pd.concat([pd.Series(y_test,index=X_test.index),pd.Series(y_pred,index=X_test.index),X_test],axis=1).set_axis(["reference","prediction","message"],axis=1).head(20))
