@@ -32,7 +32,7 @@ model.fit(X_train, y_train)
 
 
 
-def train_model(opti,df):
+def train_model(opti,whole,df):
 
     X = df['msg']
     y = df['cat']
@@ -48,15 +48,16 @@ def train_model(opti,df):
         }
         search=RandomizedSearchCV(pl,param_grid,verbose=10,cv=shuffle_split,n_iter=30,random_state=1).fit(X_part,y[X_part.index])
         return search.best_params_
-    else:
+    elif not whole:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=5)
         pl.fit(X_train, y_train)
         y_pred = pl.predict(X_test)
-        score = accuracy_score(y_test, y_pred)
         #print("score :", round(score, 5))
         #print(pd.concat([pd.Series(y_test,index=X_test.index),pd.Series(y_pred,index=X_test.index),X_test],axis=1).set_axis(["reference","prediction","message"],axis=1).head(20))
-        return pl,score
+        return pl,accuracy_score(y_test, y_pred)
+    else :
+        pl.fit(X, y)
+        y_pred = pl.predict(X)
+        return pl,accuracy_score(y, y_pred)
 
 def test_msg(model,msg) : return model.predict([msg])[0]
-
-train_model(0,pd.read_table("SMSSpamCollection"))
