@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
 from sklearn.pipeline import make_pipeline
 from sklearn.neural_network import MLPClassifier
 from sklearn.decomposition import PCA,TruncatedSVD
@@ -32,12 +32,12 @@ model.fit(X_train, y_train)
 
 
 
-def train_model(opti,whole,df):
+def train_model(opti,ratio,df,par_dict):
 
     X = df['msg']
     y = df['cat']
 
-    pl=make_pipeline(CountVectorizer(),TruncatedSVD(n_components=200,n_iter=5,random_state=1),MLPClassifier(random_state=1,max_iter=400,hidden_layer_sizes=(90, 60),alpha=0.0056))
+    pl=make_pipeline(TfidfVectorizer(),TruncatedSVD(n_components=par_dict["n_components"],n_iter=par_dict["n_iter"],random_state=par_dict["random_state"]),MLPClassifier(random_state=par_dict["random_state"],max_iter=par_dict["max_iter"],hidden_layer_sizes=par_dict["hidden_layer_sizes"],alpha=par_dict["alpha"]))
 
     if opti: #hyperparameters optimsation
         shuffle_split = ShuffleSplit(n_splits=5,test_size=0.3)
@@ -48,12 +48,11 @@ def train_model(opti,whole,df):
         }
         search=RandomizedSearchCV(pl,param_grid,verbose=10,cv=shuffle_split,n_iter=30,random_state=1).fit(X_part,y[X_part.index])
         return search.best_params_
-    elif not whole:
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=5)
+    elif ratio != 1:
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1-ratio, random_state=5)
         pl.fit(X_train, y_train)
         y_pred = pl.predict(X_test)
-        #print("score :", round(score, 5))
-        #print(pd.concat([pd.Series(y_test,index=X_test.index),pd.Series(y_pred,index=X_test.index),X_test],axis=1).set_axis(["reference","prediction","message"],axis=1).head(20))
+        #print("score :", round(accuracy_score(y_test, y_pred), 5))
         return pl,accuracy_score(y_test, y_pred)
     else :
         pl.fit(X, y)

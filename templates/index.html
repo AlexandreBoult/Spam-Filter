@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>SMS spam detection</title>
+  <link rel="stylesheet" href={{ url_for('static', filename='style.css') }}>
+</head>
+<body>
+<div class="container">
+<h1>SMS spam detection</h1>
+<form>
+  <label>Parameters of the model :</label>
+  <textarea rows = "2" name = "par" style="width: 1000px;" placeholder="Put the parameters here...">{{par if par!=None else dflt_par}}</textarea><br>
+  <p>Training ratio :</p>
+  <div class="grid-container" style="grid-template-columns: 500px 25px 180px 180px;">
+    <input type="range" min="1" max="20" value="{{ratio*20}}" class="slider" name="ratio" style="width: 500px; margin-top: 25px" oninput='document.getElementById("ratio").innerHTML = this.value/20;'>
+    <p style="margin-top: 30px" id="ratio">{{ratio}}</p>
+    <button id="train" name="train" class="button" value="1" onclick='document.getElementById("train").innerHTML = "Loading...";'>Train model</button>
+    <button name="reset" class="button" value="1">Reset settings</button>
+  </div>
+  {%if score != 0 and ratio!=1%}
+  <p>The tested accuracy of the model is : {{score}}</p>
+  {%elif ratio==1%}
+  <p>The training ratio is set to 1 so there is no accuracy metric available.</p>
+  {%else%}
+  <p>ㅤ</p>
+  {%endif%}
+  <textarea rows = "5" name = "msg" style="width: 1000px;" placeholder="Type the message here...">{{msg if msg!=None else ""}}</textarea><br>
+  {%if trained == 2%}
+  <input type="submit" name="submit" class="button" value="Submit">
+  {%else%}
+  <p class="button unselectable" style="background-color: var(--main-secondary-color); color: darkgrey;">Submit</p>
+  {%endif%}
+</form>
+{%if cat != None%}
+<p>This is a {{cat}} !</p>
+{%endif%}
+</div>
+</body>
+</html>
