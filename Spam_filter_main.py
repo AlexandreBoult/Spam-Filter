@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA,TruncatedSVD
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score,classification_report
 from sklearn.model_selection import GridSearchCV,ShuffleSplit,RandomizedSearchCV
 
 #old code
@@ -52,7 +52,7 @@ def train_model(opti,ratio,df,par_dict):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1-ratio, random_state=5)
         pl.fit(X_train, y_train)
         y_pred = pl.predict(X_test)
-        #print("score :", round(accuracy_score(y_test, y_pred), 5))
+        print(classification_report(y_test,y_pred))
         return pl,accuracy_score(y_test, y_pred)
     else :
         pl.fit(X, y)
