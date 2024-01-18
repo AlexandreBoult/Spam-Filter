@@ -2,6 +2,7 @@
   --main-bg-color: rgb(44, 46, 63);
   --main-secondary-color: rgb(74, 77, 105);
   --accent-color: #aa0449;
+  --bright-accent-color : #be0552;
 }
 
 .container {
@@ -61,6 +62,10 @@ body {
     display: inline-block;
     font-size: 16px;
     margin-top: 10px;
+    transition-duration: 0.3s;
+  }
+  .button:hover {
+    background-color: var(--bright-accent-color);
   }
 
   .unselectable {
