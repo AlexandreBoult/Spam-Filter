@@ -50,6 +50,8 @@ def clear_temp(id_vault):
         shutil.rmtree(f"settings/{id_vault}")
     except : pass
 
+try : os.mkdir(f"settings")
+except : pass
 for e in os.listdir("settings") : clear_temp(e)
 
 reset_stgs()
