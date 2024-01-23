@@ -35,6 +35,8 @@ def create_plot(cm):
     colors=reset_stgs()[-2]
     fig = plt.figure(facecolor=[e/255 for e in colors[0]])
     fig,ax=plot_confusion_matrix(conf_mat=cm,figure=fig)
+    ax.set_title('Confusion matrix of the model :')
+    ax.title.set_color('white')
     ax.xaxis.label.set_color('white')
     ax.yaxis.label.set_color('white')
     ax.set_xlabel('predicted label (ham=0, spam=1)')
