@@ -1,40 +1,61 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>SMS spam detection</title>
   <link rel="stylesheet" href={{ url_for('static', filename='style.css') }}>
+  <style>
+  :root {
+    --main-bg-color: rgb{{vault[9][0]}};
+    --main-secondary-color: rgb{{vault[9][1]}};
+    --accent-color: rgb{{vault[9][2]}};
+    --bright-accent-color : rgb{{vault[9][3]}};
+  }
+  </style>
 </head>
 <body>
 <div class="container">
 <h1>SMS spam detection</h1>
-<form>
-  <label>Parameters of the model :</label>
-  <textarea rows = "2" name = "par" style="width: 1000px;" placeholder="Put the parameters here...">{{par if par!=None else dflt_par}}</textarea><br>
-  <p>Training ratio :</p>
-  <div class="grid-container" style="grid-template-columns: 500px 25px 180px 180px;">
-    <input type="range" min="1" max="20" value="{{ratio*20}}" class="slider" name="ratio" style="width: 500px; margin-top: 25px" oninput='document.getElementById("ratio").innerHTML = this.value/20;'>
-    <p style="margin-top: 30px" id="ratio">{{ratio}}</p>
-    <button id="train" name="train" class="button" value="1" onclick='document.getElementById("train").innerHTML = "Loading...";'>Train model</button>
+<form id="fileupload" method="post" enctype="multipart/form-data">
+  <input id="file" type="file" name="file" onchange="document.getElementById('submitfile').click();" style="display: none;" accept=".json">
+</form>
+<label>Parameters of the model (for advanced users) :</label>
+<div class="grid-container" style="grid-template-columns: 630px 180px 180px;">
+    <textarea rows = "3" name = "par" style="width: 625px;" placeholder="Put the parameters here..." form="mainform">{{vault[3] if vault[3]!=None else dflt_par}}</textarea>
+    <button name="export" class="button" value="1" form="mainform">Export</button>
+    <button id="choosefile" class="button" onclick="document.getElementById('file').click();">Import</button>
+    <button id="submitfile" style="display: none;" name="import0" value="1" form="fileupload"></button>
+</div>
+<form id="mainform" method="post">
+<p>Train/Test ratio :</p>
+  <div class="grid-container" style="grid-template-columns: 405px 25px 180px 180px 180px;">
+    <input type="range" min="1" max="20" value="{{vault[1]*20}}" class="slider" name="ratio" style="width: 405px; margin-top: 25px" oninput='document.getElementById("ratio").innerHTML = this.value/20;'>
+    <p style="margin-top: 30px" id="ratio">{{vault[1]}}</p>
+    <button id="opti" name="opti" class="button" value="1" onclick='document.getElementById("opti").innerHTML = "Optimizing...";'>Optimize</button>
+    <button id="train" name="train" class="button" value="1" onclick='document.getElementById("train").innerHTML = "Training...";'>Train model</button>
     <button name="reset" class="button" value="1">Reset settings</button>
   </div>
-  {%if score != 0 and ratio!=1%}
-  <p>The tested accuracy of the model is : {{score}}</p>
-  {%elif ratio==1%}
+  {%if vault[0] != 0 and vault[1]!=1%}
+  <p>The tested accuracy of the model is : {{vault[0]}}</p>
+  {%elif vault[1]==1%}
   <p>The training ratio is set to 1 so there is no accuracy metric available.</p>
   {%else%}
   <p>ㅤ</p>
   {%endif%}
-  <textarea rows = "5" name = "msg" style="width: 1000px;" placeholder="Type the message here...">{{msg if msg!=None else ""}}</textarea><br>
-  {%if trained == 2%}
-  <input type="submit" name="submit" class="button" value="Submit">
+  <textarea rows = "5" name = "msg" style="width: 1000px;" placeholder="Type the message here...">{{vault[10] if vault[10]!=None else ""}}</textarea><br>
+  {%if vault[6] == "2"%}
+  <button name="submit" class="button" value="1">Submit</button><br>
+  {%if vault[7] != None%}
+  <p>This is a {{vault[7]}} !</p>
   {%else%}
-  <p class="button unselectable" style="background-color: var(--main-secondary-color); color: darkgrey;">Submit</p>
+  <p>ㅤ</p>
+  {%endif%}
+  <img src="data:image/png;base64, {{vault[8]}}" style="margin-left: 150px;" class="image">
+  {%else%}
+  <p class="button unselectable" style="background-color: var(--main-secondary-color); color: darkgrey; border-color: var(--main-secondary-color);">Submit</p>
   {%endif%}
 </form>
-{%if cat != None%}
-<p>This is a {{cat}} !</p>
-{%endif%}
 </div>
+<textarea name = "vault" form="mainform" style="display: none;">{{vault}}</textarea>
 </body>
 </html>

@@ -1,62 +1,73 @@
-import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
-from sklearn.pipeline import make_pipeline
-from sklearn.neural_network import MLPClassifier
-from sklearn.decomposition import PCA,TruncatedSVD
-from sklearn.compose import make_column_transformer
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import GridSearchCV,ShuffleSplit,RandomizedSearchCV
-
-#old code
-"""
-vectorizer = CountVectorizer() 
-wm = vectorizer.fit_transform(df['msg'].tolist())
-tokens=vectorizer.get_feature_names_out()
-df_vect=pd.DataFrame(data=wm.toarray(),columns=tokens)
-
-pca=PCA(n_components=200)
-
-reduced_df=pd.DataFrame(pca.fit_transform(df_vect))
-
-X = df['msg']
-y = df['cat']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-
-model = MLPClassifier(random_state=1, max_iter=200)
-model.fit(X_train, y_train)
-"""
-
-#vectorize_pl = make_pipeline(CountVectorizer(),FunctionTransformer(lambda x: x.toarray(), accept_sparse=True))
-
+from imports import *
 
 
 def train_model(opti,ratio,df,par_dict):
+    list_of_models={"MLPClassifier":("mlpc",MLPClassifier()),"KNeighborsClassifier":("knc",KNeighborsClassifier()),"RandomForestClassifier":("rfc",RandomForestClassifier()),"SVC":("svc",SVC())}
+    list_of_aliases=[e[0] for e in list(list_of_models.values())]
 
     X = df['msg']
     y = df['cat']
+    y[y=='spam']=1
+    y[y=='ham']=0
+    y=y.astype('int')
 
-    pl=make_pipeline(TfidfVectorizer(),TruncatedSVD(n_components=par_dict["n_components"],n_iter=par_dict["n_iter"],random_state=par_dict["random_state"]),MLPClassifier(random_state=par_dict["random_state"],max_iter=par_dict["max_iter"],hidden_layer_sizes=par_dict["hidden_layer_sizes"],alpha=par_dict["alpha"]))
+    preproc=Pipeline(steps=[("tfidf",TfidfVectorizer()),("tsvd",TruncatedSVD())])
+    smote=SVMSMOTE()
+    model=list_of_models[par_dict["model_name"]][1]
+    model_alias=list_of_models[par_dict["model_name"]][0]
+
+    keys=[key for key in par_dict.keys()]
+    for e in keys:
+        if (not model_alias in e) and e.split("__")[0] in list_of_aliases:
+            par_dict.pop(e)
+
+    model_name=par_dict.pop("model_name")
+    no_smote=par_dict.pop("svmsmote__off")
+
+    par_dict1,par_dict2,par_dict3={},{},{}
+    for key in par_dict.keys():
+        match key.split("__")[0]:
+            case "tfidf":
+                par_dict1[key]=par_dict[key]
+            case "tsvd":
+                par_dict1[key]=par_dict[key]
+            case "svmsmote":
+                par_dict2[key.split("__")[1]]=par_dict[key]
+            case model_alias:
+                par_dict3[key.split("__")[1]]=par_dict[key]
+
+    preproc.set_params(**par_dict1)
+    smote.set_params(**par_dict2)
+    model.set_params(**par_dict3)
 
     if opti: #hyperparameters optimsation
-        shuffle_split = ShuffleSplit(n_splits=5,test_size=0.3)
+        pl=Pipeline(steps=[("tfidf",TfidfVectorizer()),("tsvd",TruncatedSVD()),(model_alias,model)])
+        shuffle_split = StratifiedShuffleSplit(n_splits=5, test_size=1-ratio, random_state=2)
         X_part=X.sample(frac=0.5)
-        param_grid = {
-        'mlpclassifier__hidden_layer_sizes': [(int(1.5*n),n) for n in range(50,110,10)],
-        'mlpclassifier__alpha': [x/10000 for x in range(1,105,5)],
-        }
-        search=RandomizedSearchCV(pl,param_grid,verbose=10,cv=shuffle_split,n_iter=30,random_state=1).fit(X_part,y[X_part.index])
-        return search.best_params_
+        param_grid = {"MLPClassifier":{'mlpc__hidden_layer_sizes': [(int(1.5*n),n) for n in range(50,110,10)],'mlpc__alpha': [x/1000000 for x in range(1,105,5)]},
+        "KNeighborsClassifier":{'knc__p':[1,2],'knc__n_neighbors':range(1,60,5)},
+        "RandomForestClassifier":{'rfc__n_estimators':range(100,200,5)},
+        "SVC":{'svc__C':range(1,11),'svc__degree':range(2,5)}}[model_name]
+        search=RandomizedSearchCV(pl,param_grid,verbose=10,cv=shuffle_split,n_iter=30,random_state=2,scoring='f1_macro').fit(X_part,y[X_part.index])
+        best_par=search.best_params_
+        best_par['model_name']=model_name
+        return best_par
     elif ratio != 1:
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1-ratio, random_state=5)
-        pl.fit(X_train, y_train)
-        y_pred = pl.predict(X_test)
-        #print("score :", round(accuracy_score(y_test, y_pred), 5))
-        return pl,accuracy_score(y_test, y_pred)
+        X_preproc=preproc.fit_transform(X)
+        X_train, X_test, y_train, y_test = train_test_split(X_preproc, y, test_size=1-ratio, random_state=2, stratify=y)
+        if no_smote : X_res,y_res=X_train,y_train
+        else : X_res,y_res=smote.fit_resample(X_train,y_train)
+        model.fit(X_res, y_res)
+        y_pred = model.predict(X_test)
+        cm=confusion_matrix(y_test, y_pred, labels=[0,1])
+        return preproc,model,accuracy_score(y_test, y_pred),cm
     else :
-        pl.fit(X, y)
-        y_pred = pl.predict(X)
-        return pl,accuracy_score(y, y_pred)
+        X_preproc=preproc.fit_transform(X)
+        if no_smote : X_res,y_res=X_train,y_train
+        else : X_res,y_res=smote.fit_resample(X_preproc,y)
+        model.fit(X_res, y_res)
+        y_pred = model.predict(X_preproc)
+        cm=confusion_matrix(y, y_pred, labels=[0,1])
+        return preproc,model,accuracy_score(y, y_pred),cm
 
-def test_msg(model,msg) : return model.predict([msg])[0]
+def test_msg(preproc,model,msg) : return model.predict(preproc.transform([msg]))[0]
