@@ -25,7 +25,7 @@ while in the repository folder.
 
 ## Using the webapp
 To use the webapp simply launch run_app.sh in a terminal using ```./run_app.sh``` while in the project directory.<br>
-You need to set up the environment before running the app.
+The environment is created automatically if it does not exist, you still need to have python 3.11 installed though.
 ### How to use the interface
 The pipeline parameters can be specified in the "Parameters of the model :" field.
 
