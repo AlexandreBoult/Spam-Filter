@@ -31,12 +31,15 @@
   <div class="grid-container" style="grid-template-columns: 405px 25px 180px 180px 180px;">
     <input type="range" min="1" max="20" value="{{vault[1]*20}}" class="slider" name="ratio" style="width: 405px; margin-top: 25px" oninput='document.getElementById("ratio").innerHTML = this.value/20;'>
     <p style="margin-top: 30px" id="ratio">{{vault[1]}}</p>
-    <button id="opti" name="opti" class="button" value="1" onclick='document.getElementById("opti").innerHTML = "Optimizing...";'>Optimize</button>
+    <div class="popup">
+      <button id="opti" name="opti" class="button" style="width:180px" value="1" onclick='document.getElementById("opti").innerHTML = "Optimizing...";'>Optimize</button>
+      <span class="popuptext">Does not optimize svmsmote !</span>
+    </div>
     <button id="train" name="train" class="button" value="1" onclick='document.getElementById("train").innerHTML = "Training...";'>Train model</button>
     <button name="reset" class="button" value="1">Reset settings</button>
   </div>
-  {%if vault[0] != 0 and vault[1]!=1%}
-  <p>The tested accuracy of the model is : {{vault[0]}}</p>
+  {% if vault[1]!=1 and vault[0][0] != 0 and vault[0][1] != 0 %}
+  <p>The tested accuracy of the model is : {{ vault[0][0] }}, the tested f1 score of the model is : {{ vault[0][1] }}</p>
   {%elif vault[1]==1%}
   <p>The training ratio is set to 1 so there is no accuracy metric available.</p>
   {%else%}
@@ -44,7 +47,10 @@
   {%endif%}
   <textarea rows = "5" name = "msg" style="width: 1000px;" placeholder="Type the message here...">{{vault[10] if vault[10]!=None else ""}}</textarea><br>
   {%if vault[6] == "2"%}
-  <button name="submit" class="button" value="1">Submit</button><br>
+  <div class="popup">
+    <button name="submit" class="button" value="1">Submit</button><br>
+    <span class="popuptext">Resets the label if the text area is empty !</span>
+  </div>
   {%if vault[7] != None%}
   <p>This is a {{vault[7]}} !</p>
   {%else%}

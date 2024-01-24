@@ -6,9 +6,9 @@ df.columns=["cat","msg"]
 
 def reset_stgs():
     global dflt_par
-    dflt_par="'model_name'= 'SVC', 'tsvd__n_components'= 200, 'tsvd__n_iter'= 5, 'tsvd__random_state'= 2, 'svmsmote__random_state'= 2, 'svmsmote__sampling_strategy'= 0.5, 'svmsmote__off'= False, 'svc__random_state'= 2"
+    dflt_par="'model_name': 'SVC', 'tfidf__ngram_range': (1,2), 'tsvd__n_components': 200, 'tsvd__n_iter': 5, 'tsvd__random_state': 2, 'svmsmote__random_state': 2, 'svmsmote__sampling_strategy': 0.5, 'svmsmote__off': True, 'svc__random_state': 2, 'svc__class_weight': 'balanced'"
     par = dflt_par
-    score = 0
+    scores = [0,0]
     ratio = 0.8
     reset = None
     opti = None
@@ -20,14 +20,14 @@ def reset_stgs():
     image = None
     colors = [(44, 46, 63),(74, 77, 105),(99, 0, 192),(124, 0, 240)]
     msg = ""
-    return score,ratio,reset,par,export,import0,trained,cat,image,colors,msg
+    return scores,ratio,reset,par,export,import0,trained,cat,image,colors,msg
 
 
-def create_settings(par,id_vault):
+def create_settings(par_dict,id_vault):
     clear_temp(id_vault)
     os.mkdir(f"settings/{id_vault}")
     file=open(f"settings/{id_vault}/settings.json","w")
-    file.write("{"+par+"}")
+    file.write(str(par_dict))
     file.close()
 
 
@@ -67,12 +67,12 @@ def index():
     global dflt_par,model_instances
 
     if request.method == 'GET':
-        score,ratio,reset,par,export,import0,trained,cat,image,colors,msg=reset_stgs()
+        scores,ratio,reset,par,export,import0,trained,cat,image,colors,msg=reset_stgs()
         id_vault="".join([str(rd.randint(0,9)) for e in range(100)])
-        vault=(score,ratio,reset,par,export,import0,trained,cat,image,colors,msg,id_vault)
+        vault=(scores,ratio,reset,par,export,import0,trained,cat,image,colors,msg,id_vault)
 
     elif request.method == 'POST':
-        score,ratio,reset,par,export,import0,trained,cat,image,colors,msg,id_vault=ast.literal_eval(request.form.get('vault'))
+        scores,ratio,reset,par,export,import0,trained,cat,image,colors,msg,id_vault=ast.literal_eval(request.form.get('vault'))
         clear_temp(id_vault)
 
         export = request.form.get('export')
@@ -84,24 +84,23 @@ def index():
         par = request.form.get('par')
         opti = request.form.get('opti')
         if request.form.get('ratio') != None : ratio = float(request.form.get('ratio'))/20
-        if score == "" or score == None : score=0
         if par == "" or par == None : par=dflt_par
-        par_dict=dict(ast.literal_eval("{"+dflt_par.replace("=",":")+"}"),**ast.literal_eval("{"+par.replace("=",":")+"}"))
+        par_dict=dict(ast.literal_eval("{"+dflt_par.replace(" ","")+"}"),**ast.literal_eval("{"+par.replace("=",":")+"}"))
 
         if import0 == "1" :
             file = request.files.get('file')
             par=str(file.read())[3:-2]
 
         if submit == "1" :
-            preproc,model,score,cm=model_instances[id_vault]
+            preproc,model,scores,cm=model_instances[id_vault]
             trained="2"
-            cat={1:'spam',0:'ham'}[test_msg(preproc,model,msg)]
+            if msg != "" : cat={1:'spam',0:'ham'}[test_msg(preproc,model,msg)]
+            else : cat = None
 
         if trained == "1":
             print("Training model with following parameters :\n" + str(par_dict)[1:-1])
-            preproc,model,score,cm=train_model(0,ratio,df,par_dict)
-            score=round(score,5)
-            model_instances[id_vault]=(preproc,model,score,cm)
+            preproc,model,scores,cm=train_model(0,ratio,df,par_dict)
+            model_instances[id_vault]=(preproc,model,scores,cm)
             trained="2"
             image=create_plot(cm)
 
@@ -111,16 +110,17 @@ def index():
             par=str(par_dict)[1:-1]
             cat=None
 
-        if reset == "1" : score,ratio,reset,par,export,import0,trained,cat,image,colors,msg=reset_stgs()
+        if reset == "1" : scores,ratio,reset,par,export,import0,trained,cat,image,colors,msg=reset_stgs()
 
         if export == "1":
             print("export")
-            create_settings(par,id_vault)
+            create_settings(par_dict,id_vault)
             upload_folder = app.config['UPLOAD_FOLDER']
             file_path = os.path.join(current_app.root_path, upload_folder, "settings.json")
             return send_from_directory(directory=upload_folder, path=f"{id_vault}/settings.json", as_attachment=True)
 
-        vault=(score,ratio,reset,par,export,import0,trained,cat,image,colors,msg,id_vault)
+        scores = [round(score,5) for score in scores]
+        vault=(scores,ratio,reset,par,export,import0,trained,cat,image,colors,msg,id_vault)
         return render_template("index.html",vault=vault)
     
     return render_template("index.html",vault=vault)
