@@ -58,17 +58,19 @@ for e in os.listdir("settings") : clear_temp(e)
 
 reset_stgs()
 model_instances={}
+nb_instances=0
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'settings'
 
 @app.route("/", methods=['POST','GET'])
 def index():
-    global dflt_par,model_instances
+    global dflt_par,model_instances,nb_instances
 
     if request.method == 'GET':
         scores,ratio,reset,par,export,import0,trained,cat,image,colors,msg=reset_stgs()
-        id_vault="".join([str(rd.randint(0,9)) for e in range(100)])
+        id_vault=str(nb_instances)
+        nb_instances+=1
         vault=(scores,ratio,reset,par,export,import0,trained,cat,image,colors,msg,id_vault)
 
     elif request.method == 'POST':
