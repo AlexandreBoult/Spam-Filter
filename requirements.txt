@@ -1,9 +1,0 @@
-numpy
-pandas
-matplotlib
-seaborn
-scikit-learn
-flask
-imbalanced-learn
-mlxtend
-gunicorn
